@@ -1,0 +1,11 @@
+requests
+fastapi
+uvicorn
+sqlalchemy
+jinja2
+aiofiles
+databases[mysql]
+python-dateutil
+pillow
+adafruit_ssd1306
+adafruit-circuitpython-ads1x15
