@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Dashboard refresh {{time}}</h2>
+<div>
+  <form action="/" method="get">
+    <button type="submit">Meranie</button>
+  </form>
+</div>
+<div class="table-responsive">
+  <table class="table table-striped table-hover table-sm">
+    <thead>
+      <tr>
+        <th scope="col">Kanál 0</a></th>
+        <th scope="col">Kanál 1</a></th>
+        <th scope="col">Kanál 2</a></th>
+        <th scope="col">Kanál 3</a></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for hodnoty in meranie %}
+      <tr>
+        <td>bin: {{hodnoty['CH0']}}; <strong>napätie: {{hodnoty['CH0V']}} V</strong></td>
+        <td>bin: {{hodnoty['CH1']}}; <strong>napätie: {{hodnoty['CH1V']}} V</strong></td>
+        <td>bin: {{hodnoty['CH2']}}; <strong>napätie: {{hodnoty['CH2V']}} V</strong></td>
+        <td>bin: {{hodnoty['CH3']}}; <strong>napätie: {{hodnoty['CH3V']}} V</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
