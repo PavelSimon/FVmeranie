@@ -22,7 +22,6 @@ templates = Jinja2Templates(directory="./templates")
 ads = ADS.ADS1115(i2c)
 
 chan = AnalogIn(ads, ADS.P3)
-
 # debug(chan)
 
 # Routes:
