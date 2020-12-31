@@ -1,18 +1,45 @@
-from devtools import debug
+# database library
+import databases
+import sqlalchemy
+from pydantic import BaseModel
+
+from devtools import debug  # výpis premenný do promptu
 from config import PORT
 from fastapi import FastAPI, Request
-#from fastapi.responses import HTMLResponse
+# from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
-#import requests
 import time
-#from dateutil.parser import parse
+# i2c device library and initialisation
 from adafruit_ads1x15.analog_in import AnalogIn
 import adafruit_ads1x15.ads1115 as ADS
 import board
 import busio
 i2c = busio.I2C(board.SCL, board.SDA)
+
+
+"""# SQLAlchemy specific code, as with any other app"""
+DATABASE_URL = "sqlite:///./merania.db"
+metadata = sqlalchemy.MetaData()
+database = databases.Database(DATABASE_URL)
+
+zaznam = sqlalchemy.Table(
+    "zaznam",
+    metadata,
+    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
+    sqlalchemy.Column("CH0", sqlalchemy.Float),
+    sqlalchemy.Column("CH0V", sqlalchemy.Float),
+    sqlalchemy.Column("CH1", sqlalchemy.Float),
+    sqlalchemy.Column("CH1V", sqlalchemy.Float),
+    sqlalchemy.Column("CH2", sqlalchemy.Float),
+    sqlalchemy.Column("CH2V", sqlalchemy.Float),
+    sqlalchemy.Column("CH3", sqlalchemy.Float),
+    sqlalchemy.Column("CH3V", sqlalchemy.Float),
+    sqlalchemy.Column("poznamka", sqlalchemy.String),
+    sqlalchemy.Column("cas_merania", sqlalchemy.DateTime),
+)
+
 
 app = FastAPI()
 
