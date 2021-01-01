@@ -70,6 +70,34 @@ async def root(request: Request):
     value2 = AnalogIn(ads, ADS.P2)
     value3 = AnalogIn(ads, ADS.P3)
 
+    #zapis_do_db(db, value0, value1, value2, value3)
+
+    meranie = [{
+        "CH0": value0.value,
+        "CH0V": value0.voltage,
+        "CH1": value1.value,
+        "CH1V": value1.voltage,
+        "CH2": value2.value,
+        "CH2V": value2.voltage,
+        "CH3": value3.value,
+        "CH3V": value3.voltage
+    }]
+    # debug(meranie)
+    localtime = time.asctime(time.localtime(time.time()))
+    print("/; Čas:", localtime)
+    return templates.TemplateResponse("home.html", {"request": request, "meranie": meranie, "time": localtime})
+
+
+@app.get("/meranie")
+async def meranie(request: Request):
+    """
+    Show dashboard of all ADC meraní
+    """
+    value0 = AnalogIn(ads, ADS.P0)
+    value1 = AnalogIn(ads, ADS.P1)
+    value2 = AnalogIn(ads, ADS.P2)
+    value3 = AnalogIn(ads, ADS.P3)
+
     zapis_do_db(db, value0, value1, value2, value3)
 
     meranie = [{
