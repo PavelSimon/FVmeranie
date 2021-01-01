@@ -1,3 +1,4 @@
+import sqlite3
 from devtools import debug  # výpis premenný do promptu
 from config import PORT
 from fastapi import FastAPI, Request
@@ -13,19 +14,26 @@ import board
 import busio
 i2c = busio.I2C(board.SCL, board.SDA)
 
+db = sqlite3.connect('meranie.db')
+cursor = db.cursor()
+try:
+    sql = "CREATE TABLE IF NOT EXISTS meranie (CH0 INTEGER, CH0V REAL, CH1 INTEGER, CH1V REAL, CH2 INTEGER, CH2V REAL, CH3 INTEGER, CH3V REAL, poznamka TEXT, cas_merania TEXT NOT NULL)"
+    cursor.execute(sql)
+except sqlite3.Error as e:
+    print("Error:", e.args[0])
 
-"""   sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
-    sqlalchemy.Column("CH0", sqlalchemy.Float),
-    sqlalchemy.Column("CH0V", sqlalchemy.Float),
-    sqlalchemy.Column("CH1", sqlalchemy.Float),
-    sqlalchemy.Column("CH1V", sqlalchemy.Float),
-    sqlalchemy.Column("CH2", sqlalchemy.Float),
-    sqlalchemy.Column("CH2V", sqlalchemy.Float),
-    sqlalchemy.Column("CH3", sqlalchemy.Float),
-    sqlalchemy.Column("CH3V", sqlalchemy.Float),
-    sqlalchemy.Column("poznamka", sqlalchemy.String),
-    sqlalchemy.Column("cas_merania", sqlalchemy.DateTime),
-"""
+
+def zapis_do_db(db, value0, value1, value2, value3):
+    debug(value0)
+    cursor = db.cursor()
+    sql = "INSERT INTO meranie VALUES (?,?,?,?,?,?,?,?,'poznámka', datetime('now', 'localtime'))"
+    try:
+        cursor.execute(sql, (value0.value, value0.voltage, value1.value, value1.voltage,
+                             value2.value, value2.voltage, value3.value, value3.voltage))
+        db.commit()
+    except sqlite3.Error as e:
+        print("Error:", e.args[0])
+    return db.total_changes
 
 
 app = FastAPI()
@@ -50,6 +58,8 @@ async def root(request: Request):
     value1 = AnalogIn(ads, ADS.P1)
     value2 = AnalogIn(ads, ADS.P2)
     value3 = AnalogIn(ads, ADS.P3)
+
+    zapis_do_db(db, value0, value1, value2, value3)
 
     meranie = [{
         "CH0": value0.value,
