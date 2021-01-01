@@ -36,6 +36,17 @@ def zapis_do_db(db, value0, value1, value2, value3):
     return db.total_changes
 
 
+def citanie_z_db(db):
+    cursor = db.cursor()
+    try:
+        sql = "SELECT rowid, * FROM meranie"
+        cursor.execute(sql)
+        vystup = cursor.fetchall()
+    except sqlite3.Error as e:
+        print("An error occurred:", e.args[0])
+    return vystup
+
+
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="./static"), name="static")
@@ -82,10 +93,10 @@ async def graf(request: Request):
     """
     Zobrazí graf nameranej charakteristiky
     """
-
+    data_z_db = citanie_z_db(db)
     localtime = time.asctime(time.localtime(time.time()))
     print("Graf; Čas:", localtime)
-    return templates.TemplateResponse("graf.html", {"request": request, "time": localtime})
+    return templates.TemplateResponse("graf.html", {"request": request, "data_z_db": data_z_db, "time": localtime})
 
 
 # Code for running app
