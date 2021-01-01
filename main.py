@@ -24,7 +24,6 @@ except sqlite3.Error as e:
 
 
 def zapis_do_db(db, value0, value1, value2, value3):
-    debug(value0)
     cursor = db.cursor()
     sql = "INSERT INTO meranie VALUES (?,?,?,?,?,?,?,?,'poznámka', datetime('now', 'localtime'))"
     try:
@@ -38,12 +37,57 @@ def zapis_do_db(db, value0, value1, value2, value3):
 
 def citanie_z_db(db):
     cursor = db.cursor()
+    vystup = ""
     try:
         sql = "SELECT rowid, * FROM meranie"
         cursor.execute(sql)
         vystup = cursor.fetchall()
     except sqlite3.Error as e:
         print("An error occurred:", e.args[0])
+    return vystup
+
+
+def meraj(ads):
+    vystup = ""
+    value0 = AnalogIn(ads, ADS.P0)
+    value1 = AnalogIn(ads, ADS.P1)
+    value2 = AnalogIn(ads, ADS.P2)
+    value3 = AnalogIn(ads, ADS.P3)
+
+    vystup = [{
+        "CH0": value0.value,
+        "CH0V": value0.voltage,
+        "CH1": value1.value,
+        "CH1V": value1.voltage,
+        "CH2": value2.value,
+        "CH2V": value2.voltage,
+        "CH3": value3.value,
+        "CH3V": value3.voltage
+    }]
+
+    return vystup
+
+
+def meraj_a_zapis(ads, db):
+    vystup = ""
+    value0 = AnalogIn(ads, ADS.P0)
+    value1 = AnalogIn(ads, ADS.P1)
+    value2 = AnalogIn(ads, ADS.P2)
+    value3 = AnalogIn(ads, ADS.P3)
+
+    zapis_do_db(db, value0, value1, value2, value3)
+
+    vystup = [{
+        "CH0": value0.value,
+        "CH0V": value0.voltage,
+        "CH1": value1.value,
+        "CH1V": value1.voltage,
+        "CH2": value2.value,
+        "CH2V": value2.voltage,
+        "CH3": value3.value,
+        "CH3V": value3.voltage
+    }]
+
     return vystup
 
 
@@ -54,34 +98,16 @@ templates = Jinja2Templates(directory="./templates")
 
 ads = ADS.ADS1115(i2c)
 
-chan = AnalogIn(ads, ADS.P3)
-# debug(chan)
-
 # Routes:
 
 
 @app.get("/")
 async def root(request: Request):
     """
-    Show dashboard of all ADC meraní
+    Ukáže merania
     """
-    value0 = AnalogIn(ads, ADS.P0)
-    value1 = AnalogIn(ads, ADS.P1)
-    value2 = AnalogIn(ads, ADS.P2)
-    value3 = AnalogIn(ads, ADS.P3)
 
-    #zapis_do_db(db, value0, value1, value2, value3)
-
-    meranie = [{
-        "CH0": value0.value,
-        "CH0V": value0.voltage,
-        "CH1": value1.value,
-        "CH1V": value1.voltage,
-        "CH2": value2.value,
-        "CH2V": value2.voltage,
-        "CH3": value3.value,
-        "CH3V": value3.voltage
-    }]
+    meranie = meraj(ads)
     # debug(meranie)
     localtime = time.asctime(time.localtime(time.time()))
     print("/; Čas:", localtime)
@@ -91,25 +117,10 @@ async def root(request: Request):
 @app.get("/meranie")
 async def meranie(request: Request):
     """
-    Show dashboard of all ADC meraní
+    Ukáže merania a zapíše ich do db
     """
-    value0 = AnalogIn(ads, ADS.P0)
-    value1 = AnalogIn(ads, ADS.P1)
-    value2 = AnalogIn(ads, ADS.P2)
-    value3 = AnalogIn(ads, ADS.P3)
 
-    zapis_do_db(db, value0, value1, value2, value3)
-
-    meranie = [{
-        "CH0": value0.value,
-        "CH0V": value0.voltage,
-        "CH1": value1.value,
-        "CH1V": value1.voltage,
-        "CH2": value2.value,
-        "CH2V": value2.voltage,
-        "CH3": value3.value,
-        "CH3V": value3.voltage
-    }]
+    meranie = meraj_a_zapis(ads, db)
     # debug(meranie)
     localtime = time.asctime(time.localtime(time.time()))
     print("/; Čas:", localtime)
@@ -119,7 +130,7 @@ async def meranie(request: Request):
 @app.get("/graf")
 async def graf(request: Request):
     """
-    Zobrazí graf nameranej charakteristiky
+    Zobrazí graf nameranej charakteristiky (zatiaľ iba text)
     """
     data_z_db = citanie_z_db(db)
     localtime = time.asctime(time.localtime(time.time()))
