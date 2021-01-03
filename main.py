@@ -7,12 +7,40 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
 import time
+import socket
+from datetime import datetime
+import requests
+
 # i2c device library and initialisation
 from adafruit_ads1x15.analog_in import AnalogIn
 import adafruit_ads1x15.ads1115 as ADS
 import board
 import busio
+
 i2c = busio.I2C(board.SCL, board.SDA)
+
+url = 'http://dealan.sk/test.php'
+
+
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+
+def get_hostname():
+    hostname = socket.gethostname()
+    return hostname
+
+
+print('It is', get_hostname(), 'My IP address:', get_ip())
 
 db = sqlite3.connect('meranie.db')
 cursor = db.cursor()
@@ -91,6 +119,22 @@ def meraj_a_zapis(ads, db):
     return vystup
 
 
+async def zapis_na_dealan(localtime):
+    print(localtime)
+    temperature = 0.0
+    pressure = 0.0
+    humidity = 0.0
+    svetlo = 0
+    data = {'zdroj': 'DomaB50', 'station': get_hostname(), 'adresa': get_ip(
+    ), 'teplota': temperature, 'vlhkost': humidity, 'tlak': pressure, 'svetlo': svetlo}
+    # debug(data)
+    try:
+        r = requests.post(url, data=data)
+        print(r.text)
+    except:
+        print("Teraz sa nepodarilo zapísať, skúsim znovu v ďalšom kole!")
+
+
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="./static"), name="static")
@@ -106,10 +150,10 @@ async def root(request: Request):
     """
     Ukáže merania
     """
-
+    localtime = time.asctime(time.localtime(time.time()))
+    await zapis_na_dealan(localtime)
     meranie = meraj(ads)
     # debug(meranie)
-    localtime = time.asctime(time.localtime(time.time()))
     print("/; Čas:", localtime)
     return templates.TemplateResponse("home.html", {"request": request, "meranie": meranie, "time": localtime})
 
@@ -119,10 +163,10 @@ async def meranie(request: Request):
     """
     Ukáže merania a zapíše ich do db
     """
-
+    localtime = time.asctime(time.localtime(time.time()))
+    await zapis_na_dealan(localtime)
     meranie = meraj_a_zapis(ads, db)
     # debug(meranie)
-    localtime = time.asctime(time.localtime(time.time()))
     print("/; Čas:", localtime)
     return templates.TemplateResponse("home.html", {"request": request, "meranie": meranie, "time": localtime})
 
@@ -132,8 +176,9 @@ async def graf(request: Request):
     """
     Zobrazí graf nameranej charakteristiky (zatiaľ iba text)
     """
-    data_z_db = citanie_z_db(db)
     localtime = time.asctime(time.localtime(time.time()))
+    await zapis_na_dealan(localtime)
+    data_z_db = citanie_z_db(db)
     print("Graf; Čas:", localtime)
     return templates.TemplateResponse("graf.html", {"request": request, "data_z_db": data_z_db, "time": localtime})
 

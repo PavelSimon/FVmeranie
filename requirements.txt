@@ -7,3 +7,4 @@ pillow
 adafruit_ssd1306
 adafruit-circuitpython-ads1x15
 devtools[pygments]
+
