@@ -121,10 +121,11 @@ def meraj_a_zapis(ads, db):
 
 async def zapis_na_dealan(localtime):
     print(localtime)
-    temperature = 0.0
+    temperature = 0
     pressure = 0.0
     humidity = 0.0
-    svetlo = 0
+    value = AnalogIn(ads, ADS.P0)
+    svetlo = value.value
     data = {'zdroj': 'DomaB50', 'station': get_hostname(), 'adresa': get_ip(
     ), 'teplota': temperature, 'vlhkost': humidity, 'tlak': pressure, 'svetlo': svetlo}
     # debug(data)
@@ -132,7 +133,7 @@ async def zapis_na_dealan(localtime):
         r = requests.post(url, data=data)
         print(r.text)
     except:
-        print("Teraz sa nepodarilo zapísať, skúsim znovu v ďalšom kole!")
+        print(localtime, "Teraz sa nepodarilo zapísať, skúsim znovu v ďalšom kole!")
 
 
 app = FastAPI()
