@@ -142,6 +142,9 @@ app.mount("/static", StaticFiles(directory="./static"), name="static")
 templates = Jinja2Templates(directory="./templates")
 
 ads = ADS.ADS1115(i2c)
+print("ads.gain = ", ads.gain)
+ads.gain = 8
+print("ads.gain = ", ads.gain)
 
 # Routes:
 
